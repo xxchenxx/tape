@@ -40,7 +40,6 @@ class FiveWayClassificationDataset(Dataset):
             _, labels = train_test_split(labels, train_size=0.75, random_state=42)
 
         for label in labels:
-            print(label)
             self.labels.append(label.split()[0])
             self.labels_int.append(int(label.split()[1].strip()))
 
