@@ -77,7 +77,7 @@ class FiveWayClassificationDataset(Dataset):
         # pad with -1s because of cls/sep tokens
         labels = np.asarray([labels], np.int64)
         #labels = np.pad(labels, (1, 1), 'constant', constant_values=-1)
-
+        
         return token_ids, input_mask, labels
 
     def collate_fn(self, batch: List[Tuple[Any, ...]]) -> Dict[str, torch.Tensor]:
@@ -85,7 +85,9 @@ class FiveWayClassificationDataset(Dataset):
         input_ids = torch.from_numpy(pad_sequences(input_ids, 0))
         input_mask = torch.from_numpy(pad_sequences(input_mask, 0))
         #ss_label = torch.from_numpy(pad_sequences(ss_label, -1))
+        print(ss_label)
         ss_label = torch.from_numpy(ss_label)
+        
         output = {'input_ids': input_ids,
                   'input_mask': input_mask,
                   'targets': ss_label}
