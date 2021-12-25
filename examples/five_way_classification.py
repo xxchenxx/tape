@@ -75,7 +75,6 @@ class FiveWayClassificationDataset(Dataset):
         input_mask = np.ones_like(token_ids)
 
         # pad with -1s because of cls/sep tokens
-        labels = np.asarray([labels], np.int64)
         #labels = np.pad(labels, (1, 1), 'constant', constant_values=-1)
         
         return token_ids, input_mask, labels
@@ -86,7 +85,7 @@ class FiveWayClassificationDataset(Dataset):
         input_mask = torch.from_numpy(pad_sequences(input_mask, 0))
         #ss_label = torch.from_numpy(pad_sequences(ss_label, -1))
         print(ss_label)
-        ss_label = torch.from_numpy(ss_label)
+        ss_label = torch.from_numpy(torch.asarray(ss_label))
         
         output = {'input_ids': input_ids,
                   'input_mask': input_mask,
