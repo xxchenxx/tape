@@ -433,7 +433,6 @@ def run_train(model_type: str,
 
     train_dataset = utils.setup_dataset(task, data_dir, 'train', tokenizer)
     valid_dataset = utils.setup_dataset(task, data_dir, 'valid', tokenizer)
-    print(train_dataset)
     train_loader = utils.setup_loader(
         train_dataset, batch_size, local_rank, n_gpu,
         gradient_accumulation_steps, num_workers)
@@ -443,11 +442,8 @@ def run_train(model_type: str,
 
     num_train_optimization_steps = utils.get_num_train_optimization_steps(
         train_dataset, batch_size, num_train_epochs)
-    print(train_loader)
     model = registry.get_task_model(model_type, task, model_config_file, from_pretrained)
-    print(model)
     model = model.to(device)
-    print(model)
     optimizer = utils.setup_optimizer(model, learning_rate)
     viz = visualization.get(log_dir, exp_dir, local_rank, debug=debug)
     viz.log_config(input_args)
