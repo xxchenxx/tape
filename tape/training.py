@@ -298,7 +298,7 @@ def run_train_epoch(epoch_id: int,
     for step, batch in enumerate(train_loader):
         loss, metrics = runner.forward(batch)  # type: ignore
         runner.backward(loss)
-        accumulator.update(loss, metrics, step=False)
+        accumulator.update(loss.item(), metrics, step=False)
         if (step + 1) % gradient_accumulation_steps == 0:
             runner.step()
             viz.log_metrics(accumulator.step(), "train", runner.global_step)
@@ -414,10 +414,8 @@ def run_train(model_type: str,
 
     # SETUP AND LOGGING CODE #
     input_args = locals()
-    print(input_args)
     device, n_gpu, is_master = utils.setup_distributed(
         local_rank, no_cuda)
-    print(device)
     exp_dir = utils.get_expname(exp_name, task, model_type)
     save_path = Path(output_dir) / exp_dir
 
