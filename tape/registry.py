@@ -109,14 +109,17 @@ class Registry:
             return lambda dataset: cls.register_task(task_name, num_labels, dataset, models)
 
     @classmethod
-    def register_task_spec(cls, task_name: str, task_spec: Optional[TAPETaskSpec] = None):
+    def register_task_spec(cls, task_name: str, task_spec: Optional[TAPETaskSpec] = None, force_reregister=False):
         """ Registers a task_spec directly. If you find it easier to actually create a
             TAPETaskSpec manually, and then register it, feel free to use this method,
             but otherwise it is likely easier to use `registry.register_task`.
         """
         if task_spec is not None:
             if task_name in cls.task_name_mapping:
-                raise KeyError(f"A task with name '{task_name}' is already registered")
+                if not force_reregister:
+                    raise KeyError(f"A task with name '{task_name}' is already registered")
+                else:
+                    del cls.task_name_mapping[task_name] 
             cls.task_name_mapping[task_name] = task_spec
             return task_spec
         else:
