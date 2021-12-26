@@ -51,7 +51,10 @@ def pad_sequences(sequences: Sequence, constant_value=0, dtype=None, max_length=
         arr[arrslice] = seq
     if max_length > 0:
         available_start = array.shape[1] - max_length
-        start = random.randint(0, available_start)
+        if available_start > 0:
+            start = random.randint(0, available_start)
+        else:
+            start = 0
         array = array[:, start:(max_length + start + 1)]
     return array
 
