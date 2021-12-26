@@ -56,7 +56,7 @@ class Registry:
                       task_name: str,
                       num_labels: int = -1,
                       dataset: Optional[Type[Dataset]] = None,
-                      models: Optional[Dict[str, Type[ProteinModel]]] = None):
+                      models: Optional[Dict[str, Type[ProteinModel]]] = None, force_reregister=True):
         """ Register a a new TAPE task. This creates a new TAPETaskSpec.
 
         Args:
@@ -104,9 +104,9 @@ class Registry:
             if models is None:
                 models = {}
             task_spec = TAPETaskSpec(task_name, dataset, num_labels, models)
-            return cls.register_task_spec(task_name, task_spec).dataset
+            return cls.register_task_spec(task_name, task_spec, force_reregister=force_reregister).dataset
         else:
-            return lambda dataset: cls.register_task(task_name, num_labels, dataset, models)
+            return lambda dataset: cls.register_task(task_name, num_labels, dataset, models, force_reregister=force_reregister)
 
     @classmethod
     def register_task_spec(cls, task_name: str, task_spec: Optional[TAPETaskSpec] = None, force_reregister=False):
