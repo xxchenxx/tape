@@ -92,7 +92,7 @@ class FiveWayClassificationDataset(Dataset):
         return output
 
 registry.register_task_model(
-    'five_way_classification', 'transformer', ProteinBertForSequenceClassification)
+    'five_way_classification', 'transformer', ProteinBertForSequenceClassification, force_reregister=True)
 
 
 if __name__ == '__main__':
