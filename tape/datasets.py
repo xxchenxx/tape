@@ -34,7 +34,7 @@ def dataset_factory(data_file: Union[str, Path], *args, **kwargs) -> Dataset:
         raise ValueError(f"Unrecognized datafile type {data_file.suffix}")
 
 
-def pad_sequences(sequences: Sequence, constant_value=0, dtype=None) -> np.ndarray:
+def pad_sequences(sequences: Sequence, constant_value=0, dtype=None, max_length=-1) -> np.ndarray:
     batch_size = len(sequences)
     shape = [batch_size] + np.max([seq.shape for seq in sequences], 0).tolist()
 
@@ -49,7 +49,10 @@ def pad_sequences(sequences: Sequence, constant_value=0, dtype=None) -> np.ndarr
     for arr, seq in zip(array, sequences):
         arrslice = tuple(slice(dim) for dim in seq.shape)
         arr[arrslice] = seq
-
+    if max_length > 0:
+        available_start = array.shape[1] - max_length
+        start = random.randint(available_start)
+        array = array[:, start:(max_length + start + 1)]
     return array
 
 
@@ -844,3 +847,68 @@ class TRRosettaDataset(Dataset):
             f2d_dca = torch.cat([features, contacts[:, :, None]], axis=2)
 
         return f2d_dca
+
+
+
+@registry.register_task('five_way_classification')
+class FiveWayClassificationDataset(Dataset):
+
+    def __init__(self,
+                 data_path: Union[str, Path],
+                 split: str,
+                 tokenizer: Union[str, TAPETokenizer] = 'iupac',
+                 in_memory: bool = False):
+
+        if split not in ('train', 'valid',):
+            raise ValueError(f"Unrecognized split: {split}. Must be one of "
+                             f"['train', 'valid']")
+
+        if isinstance(tokenizer, str):
+            tokenizer = TAPETokenizer(vocab=tokenizer)
+        self.tokenizer = tokenizer
+
+        data_path = Path(data_path)
+        with open(data_path / 'label.txt', 'r') as f:
+            labels = f.readlines()
+        self.labels = []
+        for label in labels:
+            self.labels[label.split()[0]] = int(label.split()[1].strip())
+
+        self.ptms = {}
+        with open(data_path / 'pm.out', 'r') as f:
+            ptms = f.readlines()
+        
+        for ptm in ptms:
+            self.ptms[ptm.split()[0]] = int(ptm.split()[1].strip())
+
+
+    def __len__(self) -> int:
+        return len(self.data)
+
+    def __getitem__(self, index: int):
+        item = self.data[index]
+        protein_length = len(item['primary'])
+        token_ids = self.tokenizer.encode(item['primary'])
+        input_mask = np.ones_like(token_ids)
+
+        valid_mask = item['valid_mask']
+        contact_map = np.less(squareform(pdist(item['tertiary'])), 8.0).astype(np.int64)
+
+        yind, xind = np.indices(contact_map.shape)
+        invalid_mask = ~(valid_mask[:, None] & valid_mask[None, :])
+        invalid_mask |= np.abs(yind - xind) < 6
+        contact_map[invalid_mask] = -1
+
+        return token_ids, input_mask, contact_map, protein_length
+
+    def collate_fn(self, batch: List[Tuple[Any, ...]]) -> Dict[str, torch.Tensor]:
+        input_ids, input_mask, contact_labels, protein_length = tuple(zip(*batch))
+        input_ids = torch.from_numpy(pad_sequences(input_ids, 0))
+        input_mask = torch.from_numpy(pad_sequences(input_mask, 0))
+        contact_labels = torch.from_numpy(pad_sequences(contact_labels, -1))
+        protein_length = torch.LongTensor(protein_length)  # type: ignore
+
+        return {'input_ids': input_ids,
+                'input_mask': input_mask,
+                'targets': contact_labels,
+                'protein_length': protein_length}
