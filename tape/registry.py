@@ -30,15 +30,18 @@ class TAPETaskSpec:
         self.num_labels = num_labels
         self.models = models if models is not None else {}
 
-    def register_model(self, model_name: str, model_cls: Optional[Type[ProteinModel]] = None):
+    def register_model(self, model_name: str, model_cls: Optional[Type[ProteinModel]] = None, force_reregister=True):
         if model_cls is not None:
             if model_name in self.models:
-                raise KeyError(
+                if not force_reregister:
+                    raise KeyError(
                     f"A model with name '{model_name}' is already registered for this task")
+                else:
+                    del self.models[model_name]
             self.models[model_name] = model_cls
             return model_cls
         else:
-            return lambda model_cls: self.register_model(model_name, model_cls)
+            return lambda model_cls: self.register_model(model_name, model_cls, force_reregister=force_reregister)
 
     def get_model(self, model_name: str) -> Type[ProteinModel]:
         return self.models[model_name]
@@ -129,7 +132,8 @@ class Registry:
     def register_task_model(cls,
                             task_name: str,
                             model_name: str,
-                            model_cls: Optional[Type[ProteinModel]] = None):
+                            model_cls: Optional[Type[ProteinModel]] = None,
+                            force_reregister=True):
         r"""Register a specific model to a task with the provided model name.
             The task must already be in the registry - you cannot register a
             model to an unregistered task.
@@ -164,7 +168,7 @@ class Registry:
             raise KeyError(
                 f"Tried to register a task model for an unregistered task: {task_name}. "
                 f"Make sure to register the task {task_name} first.")
-        return cls.task_name_mapping[task_name].register_model(model_name, model_cls)
+        return cls.task_name_mapping[task_name].register_model(model_name, model_cls, force_reregister=force_reregister)
 
     @classmethod
     def register_metric(cls, name: str) -> Callable[[Callable], Callable]:
