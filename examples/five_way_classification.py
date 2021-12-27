@@ -39,7 +39,7 @@ class FiveWayClassificationDataset(Dataset):
         from sklearn.model_selection import train_test_split
         
         for label in labels:
-            name, label_int = label.split()[0]
+            name, label_int = label.split()
             if name in limited_names:
                 self.labels.append(name)
                 self.labels_int.append(int(label_int))
