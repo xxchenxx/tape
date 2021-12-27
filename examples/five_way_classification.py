@@ -70,8 +70,6 @@ class FiveWayClassificationDataset(Dataset):
         return len(self.labels)
 
     def __getitem__(self, index: int):
-        print(len(self.labels))
-        print(len(self.labels_int))
         name = self.labels[index]
         labels = self.labels_int[index]
         fasta_path = self.data_path / 'seqs' / f"{name}.fasta"
