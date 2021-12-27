@@ -57,9 +57,9 @@ class FiveWayClassificationDataset(Dataset):
         self.labels_int = list(res.values())
 
         if split == 'train':
-            self.labels, self.labels_int, _, _ = train_test_split([self.labels, self.labels_int], train_size=0.8, random_state=42)
+            (self.labels, self.labels_int), (_, _) = train_test_split([self.labels, self.labels_int], train_size=0.8, random_state=42)
         else:
-            _, _, self.labels, self.labels_int = train_test_split([self.labels, self.labels_int], train_size=0.8, random_state=42)
+            (_, _), (self.labels, self.labels_int) = train_test_split([self.labels, self.labels_int], train_size=0.8, random_state=42)
 
         
         
