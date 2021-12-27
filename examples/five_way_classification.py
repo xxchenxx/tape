@@ -98,7 +98,7 @@ class FiveWayClassificationDataset(Dataset):
         return output
 
 registry.register_task_model(
-    'five_way_classification', 'unirep', UniRepForSequenceClassification, force_reregister=True)
+    'five_way_classification', 'mLSTM', UniRepForSequenceClassification, force_reregister=True)
 
 
 if __name__ == '__main__':
