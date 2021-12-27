@@ -40,7 +40,7 @@ class FiveWayClassificationDataset(Dataset):
 
         if data_label_set is not None:
             limited_names = pickle.load(open(data_label_set, 'rb'))
-            limited_names = map(lambda x:x.split("/")[-2], limited_names)
+            limited_names = list(map(lambda x:x.split("/")[-2], limited_names))
         print(limited_names)
                     
         
