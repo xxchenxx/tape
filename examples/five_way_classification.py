@@ -39,12 +39,11 @@ class FiveWayClassificationDataset(Dataset):
         from sklearn.model_selection import train_test_split
         
         for label in labels:
-            print(label)
-            print(limited_names)
+           
             if label in limited_names:
                 self.labels.append(label.split()[0])
                 self.labels_int.append(int(label.split()[1].strip()))
-
+        print(self.labels)
         self.ptms = {}
         with open(data_path / 'pm.out', 'r') as f:
             ptms = f.readlines()
