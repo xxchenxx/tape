@@ -4,6 +4,7 @@ import torch
 from torch.utils.data import Dataset
 from pathlib import Path
 import numpy as np
+import pickle
 
 from tape.datasets import LMDBDataset, pad_sequences
 from tape.registry import registry
@@ -30,18 +31,16 @@ class FiveWayClassificationDataset(Dataset):
         self.data_path = data_path
         with open(data_path / 'label.txt', 'r') as f:
             labels = f.readlines()
+        
+        limited_names = pickle.load(open(data_path / 'names.pkl', 'rb'))
         self.labels = []
         self.labels_int = []
 
         from sklearn.model_selection import train_test_split
-        if split == 'train':
-            labels, _ = train_test_split(labels, train_size=0.75, random_state=42)
-        else:
-            _, labels = train_test_split(labels, train_size=0.75, random_state=42)
-
         for label in labels:
-            self.labels.append(label.split()[0])
-            self.labels_int.append(int(label.split()[1].strip()))
+            if label in limited_names:
+                self.labels.append(label.split()[0])
+                self.labels_int.append(int(label.split()[1].strip()))
 
         self.ptms = {}
         with open(data_path / 'pm.out', 'r') as f:
@@ -50,12 +49,17 @@ class FiveWayClassificationDataset(Dataset):
         for ptm in ptms:
             self.ptms[ptm.split()[0]] = float(ptm.split()[1].strip())
 
-        #for label in list(res.keys()):
-        #    if self.ptms[label] <= 0.8:
-        #        del res[label]
+        for label in list(res.keys()):
+            if self.ptms[label] <= 0.8:
+                del res[label]
         
         self.labels = list(res.keys())
         self.labels_int = list(res.values())
+
+        if split == 'train':
+            self.labels, self.labels_int, _, _ = train_test_split([self.labels, self.labels_int], train_size=0.8, random_state=42)
+        else:
+            _, _, self.labels, self.labels_int = train_test_split([self.labels, self.labels_int], train_size=0.8, random_state=42)
 
         
         
