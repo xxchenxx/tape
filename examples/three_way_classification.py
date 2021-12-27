@@ -48,7 +48,7 @@ class ThreeWayClassificationDataset(Dataset):
             name, label_int = label.split()
             if name in limited_names:
                 self.labels.append(name)
-                self.labels_int.append(int(label_int))
+                self.labels_int.append(int(label_int) - 2)
         #print(self.labels)
         self.ptms = {}
         with open(data_path / 'pm.out', 'r') as f:
