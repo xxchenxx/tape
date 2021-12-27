@@ -401,6 +401,8 @@ def run_train(model_type: str,
               save_freq: typing.Union[int, str] = 1,
               model_config_file: typing.Optional[str] = None,
               data_dir: str = './data',
+              data_label_set = None,
+              data_fold = None,
               output_dir: str = './results',
               no_cuda: bool = False,
               seed: int = 42,
@@ -429,8 +431,8 @@ def run_train(model_type: str,
     utils.setup_logging(local_rank, save_path, log_level)
     utils.set_random_seeds(seed, n_gpu)
 
-    train_dataset = utils.setup_dataset(task, data_dir, 'train', tokenizer)
-    valid_dataset = utils.setup_dataset(task, data_dir, 'valid', tokenizer)
+    train_dataset = utils.setup_dataset(task, data_dir, 'train', tokenizer, data_label_set=data_label_set, data_fold=data_fold)
+    valid_dataset = utils.setup_dataset(task, data_dir, 'valid', tokenizer, data_label_set=data_label_set, data_fold=data_fold)
     train_loader = utils.setup_loader(
         train_dataset, batch_size, local_rank, n_gpu,
         gradient_accumulation_steps, num_workers)

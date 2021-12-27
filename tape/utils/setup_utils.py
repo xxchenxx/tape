@@ -89,9 +89,14 @@ def setup_optimizer(model,
 def setup_dataset(task: str,
                   data_dir: typing.Union[str, Path],
                   split: str,
-                  tokenizer: str) -> Dataset:
+                  tokenizer: str,
+                  data_label_set=None,
+                  data_fold=None) -> Dataset:
     task_spec = registry.get_task_spec(task)
-    return task_spec.dataset(data_dir, split, tokenizer)  # type: ignore
+    if data_fold is None:
+        return task_spec.dataset(data_dir, split, tokenizer)  # type: ignore
+    else:
+        return task_spec.dataset(data_dir, split, tokenizer, data_label_set, data_fold)
 
 
 def setup_loader(dataset: Dataset,

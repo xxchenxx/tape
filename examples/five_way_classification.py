@@ -18,6 +18,8 @@ class FiveWayClassificationDataset(Dataset):
                  data_path: Union[str, Path],
                  split: str,
                  tokenizer: Union[str, TAPETokenizer] = 'iupac',
+                 data_label_set = None,
+                 data_fold = None,
                  in_memory: bool = False):
 
         if split not in ('train', 'valid'):
@@ -36,7 +38,11 @@ class FiveWayClassificationDataset(Dataset):
         self.labels = []
         self.labels_int = []
 
-        from sklearn.model_selection import train_test_split
+        if data_label_set is not None:
+            limited_names = pickle.load(open(data_label_set, 'rb'))
+
+        
+                    
         
         for label in labels:
             name, label_int = label.split()
@@ -58,13 +64,21 @@ class FiveWayClassificationDataset(Dataset):
         self.labels = list(res.keys())
         self.labels_int = list(res.values())
 
-        if split == 'train':
-            self.labels, _, self.labels_int, _ = train_test_split(self.labels, self.labels_int, train_size=0.8, random_state=42)
+        from sklearn.model_selection import train_test_split
+        if data_fold is not None:
+            if split == "train":
+                fold = pickle.load(open(data_fold, 'rb'))["train_ids"]
+                self.labels = [self.labels[i] for i in fold]
+                self.labels_int = [self.labels_int[i] for i in fold]
+            else:
+                fold = pickle.load(open(data_fold, 'rb'))["test_ids"]
+                self.labels = [self.labels[i] for i in fold]
+                self.labels_int = [self.labels_int[i] for i in fold]
         else:
-            _, self.labels, _, self.labels_int = train_test_split(self.labels, self.labels_int, train_size=0.8, random_state=42)
-
-        
-        
+            if split == 'train':
+                self.labels, _, self.labels_int, _ = train_test_split(self.labels, self.labels_int, train_size=0.8, random_state=42)
+            else:
+                _, self.labels, _, self.labels_int = train_test_split(self.labels, self.labels_int, train_size=0.8, random_state=42)        
 
     def __len__(self) -> int:
         return len(self.labels)
