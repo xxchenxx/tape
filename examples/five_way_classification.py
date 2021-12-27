@@ -9,7 +9,7 @@ import pickle
 from tape.datasets import LMDBDataset, pad_sequences
 from tape.registry import registry
 from tape.tokenizers import TAPETokenizer
-from tape import ProteinBertForSequenceClassification
+from tape import UniRepForSequenceClassification
 
 @registry.register_task('five_way_classification', num_labels=5)
 class FiveWayClassificationDataset(Dataset):
@@ -98,7 +98,7 @@ class FiveWayClassificationDataset(Dataset):
         return output
 
 registry.register_task_model(
-    'five_way_classification', 'transformer', ProteinBertForSequenceClassification, force_reregister=True)
+    'five_way_classification', 'unirep', UniRepForSequenceClassification, force_reregister=True)
 
 
 if __name__ == '__main__':
