@@ -11,7 +11,7 @@ from tape.registry import registry
 from tape.tokenizers import TAPETokenizer
 from tape import ProteinBertForSequenceClassification
 
-@registry.register_task('Three_way_classification', num_labels=3)
+@registry.register_task('three_way_classification', num_labels=3)
 class ThreeWayClassificationDataset(Dataset):
 
     def __init__(self,
