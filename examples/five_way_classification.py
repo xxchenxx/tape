@@ -68,6 +68,9 @@ class FiveWayClassificationDataset(Dataset):
         if data_fold is not None:
             if split == "train":
                 fold = pickle.load(open(data_fold, 'rb'))["train_ids"]
+                print(len(fold))
+                print(len(self.labels))
+                print(len(self.labels_int))
                 self.labels = [self.labels[i] for i in fold]
                 self.labels_int = [self.labels_int[i] for i in fold]
             else:
