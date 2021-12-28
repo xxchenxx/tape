@@ -47,7 +47,7 @@ class LargeFiveWayClassificationDataset(Dataset):
         
         np.random.set_seed(42)
         order = np.random.permutation(len(self.labels))
-
+        data_fold = int(data_fold)
         interval = len(self.labels) // 10
         test_sample = order[data_fold * interval:(data_fold + 1) * interval]
 
