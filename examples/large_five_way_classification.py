@@ -66,7 +66,10 @@ class LargeFiveWayClassificationDataset(Dataset):
                 train_data.append(self.labels[i])
                 train_labels.append(self.labels_int[i])
 
-
+        print(len(train_data))
+        print(len(train_labels))
+        print(len(test_data))
+        print(len(test_labels))
         if split == 'train':
             self.labels = train_data
             self.labels_int = train_labels
