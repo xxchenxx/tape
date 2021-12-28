@@ -18,6 +18,7 @@ class LargeFiveWayClassificationDataset(Dataset):
                  data_path: Union[str, Path],
                  split: str,
                  tokenizer: Union[str, TAPETokenizer] = 'iupac',
+                 data_label_set=None,
                  data_fold=None,
                  in_memory: bool = False):
 
