@@ -34,15 +34,13 @@ class LargeFiveWayClassificationDataset(Dataset):
         with open(data_path / 'label.txt', 'r') as f:
             labels = f.readlines()
         
-        limited_names = pickle.load(open(data_path / 'names.pkl', 'rb'))
         self.labels = []
         self.labels_int = []
         
         for label in labels:
             name, label_int = label.split()
-            if name in limited_names:
-                self.labels.append(name)
-                self.labels_int.append(int(label_int))
+            self.labels.append(name)
+            self.labels_int.append(int(label_int))
         #print(self.labels)
         self.ptms = {}
         
