@@ -1,5 +1,6 @@
 
 from typing import Union, List, Tuple, Any, Dict
+from tape import tokenizers
 import torch
 from torch.utils.data import Dataset
 from pathlib import Path
