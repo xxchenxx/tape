@@ -57,6 +57,10 @@ class mLSTMCell(nn.Module):
 
     def forward(self, inputs, state):
         h_prev, c_prev = state
+        print(inputs.shape)
+        print(h_prev.shape)
+        print(self.wmx)
+        print(self.wmh)
         m = self.wmx(inputs) * self.wmh(h_prev)
         z = self.wx(inputs) + self.wh(m)
         i, f, o, u = torch.chunk(z, 4, 1)
