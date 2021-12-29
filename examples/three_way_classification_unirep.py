@@ -9,15 +9,14 @@ import pickle
 from tape.datasets import LMDBDataset, pad_sequences
 from tape.registry import registry
 from tape.tokenizers import TAPETokenizer
-from tape import ProteinBertForSequenceClassification
 
-@registry.register_task('three_way_classification', num_labels=3)
-class ThreeWayClassificationDataset(Dataset):
+@registry.register_task('three_way_classification_unirep', num_labels=3)
+class ThreeWayClassificationDatasetUnirep(Dataset):
 
     def __init__(self,
                  data_path: Union[str, Path],
                  split: str,
-                 tokenizer: Union[str, TAPETokenizer] = 'iupac',
+                 tokenizer: Union[str, TAPETokenizer] = 'unirep',
                  data_label_set = None,
                  data_fold = None,
                  in_memory: bool = False):
@@ -113,10 +112,10 @@ class ThreeWayClassificationDataset(Dataset):
                   'targets': ss_label}
 
         return output
-
-
+from tape import UniRepForSequenceClassification
 registry.register_task_model(
-    'three_way_classification', 'transformer', ProteinBertForSequenceClassification, force_reregister=True)
+    'three_way_classification_unirep', 'unirep', UniRepForSequenceClassification, force_reregister=True)
+
 
 if __name__ == '__main__':
     """ To actually run the task, you can do one of two things. You can
