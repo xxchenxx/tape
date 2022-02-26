@@ -61,7 +61,7 @@ class BinaryClassificationDataset(Dataset):
         token_ids = self.tokenizer.encode(fasta)
         input_mask = np.ones_like(token_ids)
         
-        return token_ids, input_mask, label
+        return token_ids, input_mask, int(label)
 
     def collate_fn(self, batch: List[Tuple[Any, ...]]) -> Dict[str, torch.Tensor]:
         input_ids, input_mask, ss_label = tuple(zip(*batch))
