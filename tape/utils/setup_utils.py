@@ -93,7 +93,7 @@ def setup_dataset(task: str,
                   fasta_root=None,
                   split_file=None) -> Dataset:
     task_spec = registry.get_task_spec(task)
-    if data_fold is None:
+    if fasta_root is None:
         return task_spec.dataset(data_dir, split, tokenizer)  # type: ignore
     else:
         return task_spec.dataset(data_dir, split, tokenizer, fasta_root, split_file)
