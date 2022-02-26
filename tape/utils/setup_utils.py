@@ -90,13 +90,13 @@ def setup_dataset(task: str,
                   data_dir: typing.Union[str, Path],
                   split: str,
                   tokenizer: str,
-                  data_label_set=None,
-                  data_fold=None) -> Dataset:
+                  fasta_root=None,
+                  split_file=None) -> Dataset:
     task_spec = registry.get_task_spec(task)
     if data_fold is None:
         return task_spec.dataset(data_dir, split, tokenizer)  # type: ignore
     else:
-        return task_spec.dataset(data_dir, split, tokenizer, data_label_set, data_fold)
+        return task_spec.dataset(data_dir, split, tokenizer, fasta_root, split_file)
 
 
 def setup_loader(dataset: Dataset,
