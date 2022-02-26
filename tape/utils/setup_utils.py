@@ -116,7 +116,7 @@ def setup_loader(dataset: Dataset,
         dataset,
         num_workers=num_workers,
         collate_fn=dataset.collate_fn,  # type: ignore
-        batch_sampler=batch_sampler)
+        batch_sampler=batch_sampler, drop_last=True)
 
     return loader
 

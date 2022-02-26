@@ -65,7 +65,8 @@ def create_train_parser(base_parser: argparse.ArgumentParser) -> argparse.Argume
                         help='Directory from which to load task data')
     parser.add_argument('--data-label-set', default=None)
     parser.add_argument('--data-fold', default=None)
-
+    parser.add_argument('--fasta-root', default=None)
+    parser.add_argument('--split-file', default=None)
     parser.add_argument('--num_train_epochs', default=10, type=int,
                         help='Number of training epochs')
     parser.add_argument('--num_log_iter', default=20, type=int,
