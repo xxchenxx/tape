@@ -11,7 +11,7 @@ from tape.registry import registry
 from tape.tokenizers import TAPETokenizer
 from tape import ProteinBertForSequenceClassification
 
-@registry.register_task('three_classification', num_labels=3)
+@registry.register_task('three_way_classification', num_labels=3)
 class BinaryClassificationDataset(Dataset):
 
     def __init__(self,
@@ -78,13 +78,13 @@ class BinaryClassificationDataset(Dataset):
 
 
 registry.register_task_model(
-    'three_classification', 'transformer', ProteinBertForSequenceClassification, force_reregister=True)
+    'three_way_classification', 'transformer', ProteinBertForSequenceClassification, force_reregister=True)
 from tape import UniRepForSequenceClassification
 from tape import ProteinResNetForSequenceClassification
 registry.register_task_model(
-    'three_classification', 'unirep', UniRepForSequenceClassification, force_reregister=True)
+    'three_way_classification', 'unirep', UniRepForSequenceClassification, force_reregister=True)
 registry.register_task_model(
-    'three_classification', 'resnet', ProteinResNetForSequenceClassification, force_reregister=True)
+    'three_way_classification', 'resnet', ProteinResNetForSequenceClassification, force_reregister=True)
 
 if __name__ == '__main__':
     """ To actually run the task, you can do one of two things. You can
