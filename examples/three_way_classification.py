@@ -5,101 +5,63 @@ from torch.utils.data import Dataset
 from pathlib import Path
 import numpy as np
 import pickle
-
+import os
 from tape.datasets import LMDBDataset, pad_sequences
 from tape.registry import registry
 from tape.tokenizers import TAPETokenizer
 from tape import ProteinBertForSequenceClassification
 
-@registry.register_task('three_way_classification', num_labels=3)
-class ThreeWayClassificationDataset(Dataset):
+@registry.register_task('three_classification', num_labels=3)
+class BinaryClassificationDataset(Dataset):
 
     def __init__(self,
                  data_path: Union[str, Path],
                  split: str,
                  tokenizer: Union[str, TAPETokenizer] = 'iupac',
-                 data_label_set = None,
-                 data_fold = None,
+                 fasta_root = None,
+                 split_file = None,
                  in_memory: bool = False):
 
         if split not in ('train', 'valid'):
             raise ValueError(f"Unrecognized split: {split}. Must be one of "
-                             f"['train', 'valid")
+                             f"['train', 'valid']")
         if isinstance(tokenizer, str):
             tokenizer = TAPETokenizer(vocab=tokenizer)
         self.tokenizer = tokenizer
 
         data_path = Path(data_path)
         self.data_path = data_path
-        with open(data_path / 'label.txt', 'r') as f:
-            labels = f.readlines()
+        with open(data_path / split_file, 'rb') as f:
+            split_file = pickle.load(f)
         
-        limited_names = pickle.load(open(data_path / 'names.pkl', 'rb'))
-        self.labels = []
-        self.labels_int = []
-
-        if data_label_set is not None:
-            limited_names = pickle.load(open(data_label_set, 'rb'))
-            limited_names = list(map(lambda x:x.split("/")[-2], limited_names))
-        print(limited_names)
-                    
-        
-        for label in labels:
-            name, label_int = label.split()
-            if name in limited_names:
-                self.labels.append(name)
-                self.labels_int.append(int(label_int) - 2)
-        #print(self.labels)
-        self.ptms = {}
-        with open(data_path / 'pm.out', 'r') as f:
-            ptms = f.readlines()
-        res = {self.labels[i]: self.labels_int[i] for i in range(len(self.labels))}
-        for ptm in ptms:
-            self.ptms[ptm.split()[0]] = float(ptm.split()[1].strip())
-
-        for label in list(res.keys()):
-            if self.ptms[label] <= 0.8:
-                del res[label]
-        
-        self.labels = list(res.keys())
-        self.labels_int = list(res.values())
-
-        from sklearn.model_selection import train_test_split
-        if data_fold is not None:
-            if split == "train":
-                fold = pickle.load(open(data_fold, 'rb'))["train_ids"]
-                print(len(fold))
-                print(len(self.labels))
-                print(len(self.labels_int))
-                self.labels = [self.labels[i] for i in fold]
-                self.labels_int = [self.labels_int[i] for i in fold]
-            else:
-                fold = pickle.load(open(data_fold, 'rb'))["test_ids"]
-                self.labels = [self.labels[i] for i in fold]
-                self.labels_int = [self.labels_int[i] for i in fold]
+        if split == 'train':
+            names = split_file['train_names']
+            labels = split_file['train_labels']
         else:
-            if split == 'train':
-                self.labels, _, self.labels_int, _ = train_test_split(self.labels, self.labels_int, train_size=0.8, random_state=42)
-            else:
-                _, self.labels, _, self.labels_int = train_test_split(self.labels, self.labels_int, train_size=0.8, random_state=42)        
+            names = split_file['test_names']
+            labels = split_file['test_labels']
 
+        fasta_file_paths = []
+        for name in names: 
+            fasta_file_path = os.path.join(fasta_root, name + ".fasta")                
+            fasta_file_paths.append(fasta_file_path)
+            
+        self.labels = labels
+        self.fasta_file_paths = fasta_file_paths
+                             
     def __len__(self) -> int:
         return len(self.labels)
 
     def __getitem__(self, index: int):
-        name = self.labels[index]
-        labels = self.labels_int[index]
-        fasta_path = self.data_path / 'seqs' / f"{name}.fasta"
+        label = self.labels[index]
+        fasta_path = self.fasta_file_paths[index]
         with open(fasta_path, 'r') as f:
             fasta = f.readlines()[1:]
             fasta = ''.join(fasta).replace("\n", "")
         token_ids = self.tokenizer.encode(fasta)
         input_mask = np.ones_like(token_ids)
-
-        # pad with -1s because of cls/sep tokens
-        #labels = np.pad(labels, (1, 1), 'constant', constant_values=-1)
         
-        return token_ids, input_mask, labels
+        return token_ids, input_mask, int(label)
 
     def collate_fn(self, batch: List[Tuple[Any, ...]]) -> Dict[str, torch.Tensor]:
         input_ids, input_mask, ss_label = tuple(zip(*batch))
@@ -116,13 +78,13 @@ class ThreeWayClassificationDataset(Dataset):
 
 
 registry.register_task_model(
-    'three_way_classification', 'transformer', ProteinBertForSequenceClassification, force_reregister=True)
+    'three_classification', 'transformer', ProteinBertForSequenceClassification, force_reregister=True)
 from tape import UniRepForSequenceClassification
 from tape import ProteinResNetForSequenceClassification
 registry.register_task_model(
-    'three_way_classification', 'unirep', UniRepForSequenceClassification, force_reregister=True)
+    'three_classification', 'unirep', UniRepForSequenceClassification, force_reregister=True)
 registry.register_task_model(
-    'three_way_classification', 'resnet', ProteinResNetForSequenceClassification, force_reregister=True)
+    'three_classification', 'resnet', ProteinResNetForSequenceClassification, force_reregister=True)
 
 if __name__ == '__main__':
     """ To actually run the task, you can do one of two things. You can
