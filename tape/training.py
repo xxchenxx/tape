@@ -439,7 +439,7 @@ def run_train(model_type: str,
         train_dataset, batch_size, local_rank, n_gpu,
         gradient_accumulation_steps, num_workers)
     valid_loader = utils.setup_loader(
-        valid_dataset, batch_size, local_rank, n_gpu,
+        valid_dataset, 1, local_rank, n_gpu,
         gradient_accumulation_steps, num_workers)
 
     num_train_optimization_steps = utils.get_num_train_optimization_steps(
