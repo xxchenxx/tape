@@ -324,7 +324,7 @@ def run_valid_epoch(epoch_id: int,
 
     torch.set_grad_enabled(False)
     runner.eval()
-    print(f"NUM OF BATCHES: {num_batches")
+    print(f"NUM OF BATCHES: {num_batches}")
     for batch in tqdm(valid_loader, desc='Running Eval', total=num_batches,
                       disable=not is_master, leave=False):
         loss, metrics = runner.forward(batch)  # type: ignore
