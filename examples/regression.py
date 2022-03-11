@@ -31,6 +31,7 @@ class BinaryClassificationDataset(Dataset):
 
         data_path = Path(data_path)
         self.data_path = data_path
+        print(split_file)
         with open(data_path / split_file, 'rb') as f:
             split_file = pickle.load(f)
         
