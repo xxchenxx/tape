@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 import inspect
 import pickle as pkl
+from cv2 import split
 
 from tqdm import tqdm
 import torch
@@ -432,7 +433,7 @@ def run_train(model_type: str,
     utils.barrier_if_distributed()
     utils.setup_logging(local_rank, save_path, log_level)
     utils.set_random_seeds(seed, n_gpu)
-
+    print(split_file)
     train_dataset = utils.setup_dataset(task, data_dir, 'train', tokenizer, fasta_root=fasta_root, split_file=split_file)
     valid_dataset = utils.setup_dataset(task, data_dir, 'valid', tokenizer, fasta_root=fasta_root, split_file=split_file)
     train_loader = utils.setup_loader(
