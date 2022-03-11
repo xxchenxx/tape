@@ -341,8 +341,8 @@ def run_valid_epoch(epoch_id: int,
     targets = torch.cat(targets, 0)
     outputs = torch.cat(outputs, 0)
 
-    print(targets.shape)
-    if targets.shape[1] == 1:
+    print(outputs.shape)
+    if outputs.shape[1] == 1:
         print(f"EVAL SPEARMAMR: {scipy.stats.spearmanr(targets.cpu().numpy(), outputs.cpu().numpy())}")
 
     # Reduce loss across all processes if multiprocessing
