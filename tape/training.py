@@ -20,6 +20,8 @@ from . import visualization
 from .registry import registry
 from .models.modeling_utils import ProteinModel
 
+import scipy
+
 try:
     from apex import amp
     import amp_C
@@ -325,10 +327,23 @@ def run_valid_epoch(epoch_id: int,
     torch.set_grad_enabled(False)
     runner.eval()
     print(f"NUM OF BATCHES: {num_batches}")
+    targets = []
+    outputs = []
     for batch in tqdm(valid_loader, desc='Running Eval', total=num_batches,
                       disable=not is_master, leave=False):
-        loss, metrics = runner.forward(batch)  # type: ignore
+        loss, metrics, output = runner.forward(batch, return_outputs=True)  # type: ignore
+
+        targets.append(batch['targets'])
+        outputs.append(output[1])
+
         accumulator.update(loss, metrics)
+
+    targets = torch.cat(targets, 0)
+    outputs = torch.cat(outputs, 0)
+
+    print(targets.shape)
+    if targets.shape[1] == 1:
+        print(f"EVAL SPEARMAMR: {scipy.stats.spearmanr(targets.cpu().numpy(), outputs.cpu().numpy())}")
 
     # Reduce loss across all processes if multiprocessing
     eval_loss = utils.reduce_scalar(accumulator.final_loss())

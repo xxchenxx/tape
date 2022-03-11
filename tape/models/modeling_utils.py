@@ -784,7 +784,7 @@ class ValuePredictionHead(nn.Module):
         self.value_prediction = SimpleMLP(hidden_size, 512, 1, dropout)
 
     def forward(self, pooled_output, targets=None):
-        value_pred = self.value_prediction(pooled_output)
+        value_pred = self.value_prediction(pooled_output) * 100
         outputs = (value_pred,)
 
         if targets is not None:
