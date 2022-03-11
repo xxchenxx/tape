@@ -6,7 +6,6 @@ import json
 from pathlib import Path
 import inspect
 import pickle as pkl
-from cv2 import split
 
 from tqdm import tqdm
 import torch
