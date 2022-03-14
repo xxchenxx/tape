@@ -350,7 +350,11 @@ def run_valid_epoch(epoch_id: int,
         #print(f"EVAL SPEARMAMR: {scipy.stats.spearmanr(targets.cpu().numpy(), outputs.cpu().numpy())}")
         metrics['spearmanr'] = scipy.stats.spearmanr(targets.cpu().numpy(), outputs.cpu().numpy())
     else:
-        pred = torch.argmax(outputs, dim=-1)
+        pred = torch.argmax(outputs, dim=-1).view(-1)
+        targest = targets.view(-1)
+        print(pred)
+        print(targets)
+        print((pred == targets).sum())
         acc = (pred == targets).sum() / pred.shape[0]
         metrics['eval_accuracy'] = acc
     print_str = f"Evaluation: [Loss: {eval_loss:.5g}]"
