@@ -341,15 +341,18 @@ def run_valid_epoch(epoch_id: int,
     targets = torch.cat(targets, 0)
     outputs = torch.cat(outputs, 0)
 
-    print(outputs.shape)
-    if outputs.shape[1] == 1:
-        print(f"EVAL SPEARMAMR: {scipy.stats.spearmanr(targets.cpu().numpy(), outputs.cpu().numpy())}")
-
+    
     # Reduce loss across all processes if multiprocessing
     eval_loss = utils.reduce_scalar(accumulator.final_loss())
     metrics = {name: utils.reduce_scalar(value)
                for name, value in accumulator.final_metrics().items()}
-
+    if outputs.shape[1] == 1:
+        #print(f"EVAL SPEARMAMR: {scipy.stats.spearmanr(targets.cpu().numpy(), outputs.cpu().numpy())}")
+        metrics['spearmanr'] = scipy.stats.spearmanr(targets.cpu().numpy(), outputs.cpu().numpy())
+    else:
+        pred = torch.topk(outputs)[1]
+        acc = (pred == targets).sum() / pred.shape[0]
+        metrics['eval_accuracy'] = acc
     print_str = f"Evaluation: [Loss: {eval_loss:.5g}]"
     for name, value in metrics.items():
         print_str += f"[{name.capitalize()}: {value:.5g}]"
