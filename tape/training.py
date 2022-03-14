@@ -338,8 +338,8 @@ def run_valid_epoch(epoch_id: int,
 
         accumulator.update(loss, metrics)
 
-    targets = torch.cat(targets, 0).cpu().numpy()
-    outputs = torch.cat(outputs, 0).cpu().numpy()
+    targets = torch.cat(targets, 0).cpu()
+    outputs = torch.cat(outputs, 0).cpu()
 
     
     # Reduce loss across all processes if multiprocessing
