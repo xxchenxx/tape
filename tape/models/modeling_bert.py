@@ -372,6 +372,7 @@ class ProteinBertPooler(nn.Module):
         # to the first token.
         first_token_tensor = hidden_states[:, 0]
         pooled_output = self.dense(first_token_tensor)
+        # print(pooled_output)
         pooled_output = self.activation(pooled_output)
         return pooled_output
 
@@ -448,6 +449,7 @@ class ProteinBertModel(ProteinBertAbstractModel):
                                        extended_attention_mask,
                                        chunks=None)
         sequence_output = encoder_outputs[0]
+        # print(sequence_output)
         pooled_output = self.pooler(sequence_output)
 
         # add hidden_states and attentions if they are here
@@ -529,8 +531,10 @@ class ProteinBertForSequenceClassification(ProteinBertAbstractModel):
         outputs = self.bert(input_ids, input_mask=input_mask)
 
         sequence_output, pooled_output = outputs[:2]
-
+        # print(pooled_output)
         outputs = self.classify(pooled_output, targets) + outputs[2:]
+        # print(outputs.shape)
+        # print(outputs[1].mean())
         # (loss), prediction_scores, (hidden_states), (attentions)
         return outputs
 

@@ -85,7 +85,7 @@ class ForwardRunner:
                      for name, tensor in batch.items()}
 
         outputs = self.model(**batch)
-
+        
         if no_loss:
             return outputs
 
@@ -300,6 +300,8 @@ def run_train_epoch(epoch_id: int,
     for step, batch in enumerate(train_loader):
         loss, metrics = runner.forward(batch)  # type: ignore
         runner.backward(loss)
+
+
         accumulator.update(loss.item(), metrics, step=False)
         if (step + 1) % gradient_accumulation_steps == 0:
             runner.step()
@@ -349,17 +351,21 @@ def run_valid_epoch(epoch_id: int,
     if outputs.shape[1] == 1:
         #print(f"EVAL SPEARMAMR: {scipy.stats.spearmanr(targets.cpu().numpy(), outputs.cpu().numpy())}")
         metrics['spearmanr'] = scipy.stats.spearmanr(targets.cpu().numpy(), outputs.cpu().numpy())
+        metrics['pearsonr'] = float(scipy.stats.pearsonr(targets.cpu().numpy(), outputs.cpu().numpy())[0])
     else:
         pred = torch.argmax(outputs, dim=-1).view(-1)
-        targest = targets.view(-1)
-        print(pred)
-        print(targets)
-        print((pred == targets).sum())
+        targets = targets.view(-1)
         acc = (pred == targets).sum() / pred.shape[0]
+        precision = ((pred == targets).float() * (pred == 1).float()).sum() / (pred == 1).float().sum()
         metrics['eval_accuracy'] = acc
+        metrics['eval_precision'] = precision
+
     print_str = f"Evaluation: [Loss: {eval_loss:.5g}]"
     for name, value in metrics.items():
-        print_str += f"[{name.capitalize()}: {value:.5g}]"
+        try:
+            print_str += f"[{name.capitalize()}: {value:.5g}]"
+        except:
+            print_str += f"[{name.capitalize()}: {value.correlation:.5g}]"
 
     metrics['loss'] = eval_loss
     if viz is not None:

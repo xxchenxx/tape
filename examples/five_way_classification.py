@@ -104,8 +104,8 @@ class FiveWayClassificationDataset(Dataset):
 
     def collate_fn(self, batch: List[Tuple[Any, ...]]) -> Dict[str, torch.Tensor]:
         input_ids, input_mask, ss_label = tuple(zip(*batch))
-        input_ids = torch.from_numpy(pad_sequences(input_ids, 0, max_length=1280))
-        input_mask = torch.from_numpy(pad_sequences(input_mask, 0, max_length=1280))
+        input_ids = torch.from_numpy(pad_sequences(input_ids, 0, max_length=512))
+        input_mask = torch.from_numpy(pad_sequences(input_mask, 0, max_length=512))
         #ss_label = torch.from_numpy(pad_sequences(ss_label, -1))
         ss_label = torch.from_numpy(np.asarray(ss_label))
         

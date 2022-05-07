@@ -798,9 +798,13 @@ class SequenceClassificationHead(nn.Module):
     def __init__(self, hidden_size: int, num_labels: int):
         super().__init__()
         self.classify = SimpleMLP(hidden_size, 512, num_labels)
-
     def forward(self, pooled_output, targets=None):
         logits = self.classify(pooled_output)
+        # print(pooled_output)
+        # print(logits.shape)
+        # print(logits.mean())
+        # print(list(self.classify.parameters()))
+        # assert False
         outputs = (logits,)
 
         if targets is not None:
