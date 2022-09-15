@@ -121,8 +121,7 @@ def setup_loader(dataset: Dataset,
     return loader
 
 
-def setup_distributed(local_rank: int,
-                      no_cuda: bool) -> typing.Tuple[torch.device, int, bool]:
+def setup_distributed(local_rank: int, no_cuda: bool) -> typing.Tuple[torch.device, int, bool]:
     if local_rank != -1 and not no_cuda:
         torch.cuda.set_device(local_rank)
         device: torch.device = torch.device("cuda", local_rank)

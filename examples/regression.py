@@ -36,8 +36,12 @@ class BinaryClassificationDataset(Dataset):
             split_file = pickle.load(f)
         
         if split == 'train':
-            names = split_file['train_names']
-            labels = split_file['train_labels']
+            try:
+                names = split_file['train_names']
+                labels = split_file['train_labels']
+            except:
+                names = split_file['test_names']
+                labels = split_file['test_labels']
         else:
             names = split_file['test_names']
             labels = split_file['test_labels']

@@ -13,7 +13,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
 from .optimization import WarmupLinearSchedule
-
+from torch.nn.utils import prune
 from . import utils
 from . import errors
 from . import visualization
@@ -351,7 +351,7 @@ def run_valid_epoch(epoch_id: int,
     if outputs.shape[1] == 1:
         #print(f"EVAL SPEARMAMR: {scipy.stats.spearmanr(targets.cpu().numpy(), outputs.cpu().numpy())}")
         metrics['spearmanr'] = scipy.stats.spearmanr(targets.cpu().numpy(), outputs.cpu().numpy())
-        metrics['pearsonr'] = float(scipy.stats.pearsonr(targets.cpu().numpy(), outputs.cpu().numpy())[0])
+        metrics['pearsonr'] = scipy.stats.pearsonr(targets.cpu().numpy().reshape(-1), outputs.cpu().numpy().reshape(-1))[0]
     else:
         pred = torch.argmax(outputs, dim=-1).view(-1)
         targets = targets.view(-1)
@@ -411,6 +411,33 @@ def run_eval_epoch(eval_loader: DataLoader,
     return save_outputs
 
 
+def pruning_model(model,px, method):
+
+    parameters_to_prune =[]
+    for ii in range(12):
+        parameters_to_prune.append((model.bert.encoder.layer[ii].attention.self.query, 'weight'))
+        parameters_to_prune.append((model.bert.encoder.layer[ii].attention.self.key, 'weight'))
+        parameters_to_prune.append((model.bert.encoder.layer[ii].attention.self.value, 'weight'))
+        parameters_to_prune.append((model.bert.encoder.layer[ii].attention.output.dense, 'weight'))
+        parameters_to_prune.append((model.bert.encoder.layer[ii].intermediate.dense, 'weight'))
+        parameters_to_prune.append((model.bert.encoder.layer[ii].output.dense, 'weight'))
+        print(f"PRUNING LAYER {ii}")
+
+    parameters_to_prune.append((model.bert.pooler.dense, 'weight'))
+    parameters_to_prune = tuple(parameters_to_prune)
+    if method == 'omp':
+        prune.global_unstructured(
+            parameters_to_prune,
+            pruning_method=prune.L1Unstructured,
+            amount=px,
+        )
+    elif method == 'rp':
+        prune.global_unstructured(
+            parameters_to_prune,
+            pruning_method=prune.RandomUnstructured,
+            amount=px,
+        )
+
 def run_train(model_type: str,
               task: str,
               learning_rate: float = 1e-4,
@@ -442,6 +469,8 @@ def run_train(model_type: str,
               debug: bool = False,
               log_level: typing.Union[str, int] = logging.INFO,
               patience: int = -1,
+              pruning_ratio: float = 0,
+              pruning_method: str = 'omp',
               resume_from_checkpoint: bool = False) -> None:
 
     # SETUP AND LOGGING CODE #
@@ -474,6 +503,10 @@ def run_train(model_type: str,
         train_dataset, batch_size, num_train_epochs)
     model = registry.get_task_model(model_type, task, model_config_file, from_pretrained)
     model = model.to(device)
+
+    if pruning_ratio > 0:
+        pruning_model(model, pruning_ratio, pruning_method)
+
     optimizer = utils.setup_optimizer(model, learning_rate)
     viz = visualization.get(log_dir, exp_dir, local_rank, debug=debug)
     viz.log_config(input_args)
@@ -564,6 +597,7 @@ def run_train(model_type: str,
                     raise errors.EarlyStopping
                 else:
                     break
+        val_loss, _ = run_valid_epoch(num_train_epochs, valid_loader, runner, viz, is_master)
     logger.info(f"Finished training after {num_train_epochs} epochs.")
     if best_val_loss != float('inf'):
         logger.log(35, f"Best Val Loss: {best_val_loss}")
@@ -609,7 +643,27 @@ def run_eval(model_type: str,
     save_outputs = run_eval_epoch(valid_loader, runner, is_master)
     target = [el['target'] for el in save_outputs]
     prediction = [el['prediction'] for el in save_outputs]
-
+    import numpy as np
+    target = np.array(target).reshape(-1)
+    prediction = np.argmax(np.concatenate(prediction, 0).reshape(-1, 5), 1)
+    def t(x):
+        x = float(x)
+        if -20 <= x < 5:
+            return 0
+        elif 5 <= x < 25:
+            return 1
+        elif 25 <= x < 45:
+            return 2
+        elif 45 <= x < 75:
+            return 3
+        else:
+            return 4
+    mask = ~np.isnan(target)
+    target = target[mask]
+    prediction = prediction[mask]
+    for i in range(target.shape[0]):
+        target[i] = t(target[i])
+    print((target == prediction).sum() / target.shape[0])
     metrics_to_save = {name: metric(target, prediction)
                        for name, metric in zip(metrics, metric_functions)}
     logger.info(''.join(f'{name}: {val}' for name, val in metrics_to_save.items()))
