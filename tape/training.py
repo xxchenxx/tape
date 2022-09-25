@@ -513,9 +513,6 @@ def run_train(model_type: str,
     model = registry.get_task_model(model_type, task, model_config_file, from_pretrained)
     model = model.to(device)
 
-    if pruning_ratio > 0:
-        pruning_model(model, pruning_ratio, pruning_method)
-
     optimizer = utils.setup_optimizer(model, learning_rate)
     viz = visualization.get(log_dir, exp_dir, local_rank, debug=debug)
     viz.log_config(input_args)
