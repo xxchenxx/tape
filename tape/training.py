@@ -19,7 +19,7 @@ from . import errors
 from . import visualization
 from .registry import registry
 from .models.modeling_utils import ProteinModel
-
+from .masking import Masking, CosineDecay
 import scipy
 
 try:
@@ -268,7 +268,9 @@ def run_train_epoch(epoch_id: int,
                     runner: BackwardRunner,
                     viz: typing.Optional[visualization.TAPEVisualizer] = None,
                     num_log_iter: int = 20,
-                    gradient_accumulation_steps: int = 1) -> LossAndMetrics:
+                    gradient_accumulation_steps: int = 1,
+                    test_loader: DataLoader = None,
+                    mask = None) -> LossAndMetrics:
     if viz is None:
         viz = visualization.DummyVisualizer()
     smoothing = 1 - 1 / num_log_iter
@@ -305,12 +307,16 @@ def run_train_epoch(epoch_id: int,
         accumulator.update(loss.item(), metrics, step=False)
         if (step + 1) % gradient_accumulation_steps == 0:
             runner.step()
+            mask.step()
             viz.log_metrics(accumulator.step(), "train", runner.global_step)
             if runner.global_step % num_log_iter == 0:
                 end_t = timer()
                 logger.info(make_log_str(step, end_t - start_t))
                 start_t = end_t
 
+            if runner.global_step % 3000 == 0 and test_loader is not None:
+                run_eval_epoch(test_loader, runner, True)
+            
     final_print_str = f"Train: [Loss: {accumulator.final_loss():.5g}]"
     for name, value in accumulator.final_metrics().items():
         final_print_str += f"[{name.capitalize()}: {value:.5g}]"
@@ -471,6 +477,9 @@ def run_train(model_type: str,
               patience: int = -1,
               pruning_ratio: float = 0,
               pruning_method: str = 'omp',
+              init_method: str = 'one_shot_gm',
+              sparse_mode: str = 'DST',
+              update_freq: int = 500,
               resume_from_checkpoint: bool = False) -> None:
 
     # SETUP AND LOGGING CODE #
@@ -512,13 +521,28 @@ def run_train(model_type: str,
     viz.log_config(input_args)
     viz.log_config(model.config.to_dict())
     viz.watch(model)
-
+    decay = CosineDecay(0.5, len(train_loader) * 4)
+    mask = Masking(optimizer, prune_rate_decay=decay, prune_rate=0.5,
+                           sparsity=pruning_ratio, prune_mode=pruning_method,
+                           growth_mode='gradient', redistribution_mode='none', sparse_init=init_method,
+                           sparse_mode=sparse_mode, update_frequency=update_freq)
+    mask.add_module(model)
     logger.info(
         f"device: {device} "
         f"n_gpu: {n_gpu}, "
         f"distributed_training: {local_rank != -1}, "
         f"16-bits training: {fp16}")
-
+    if mask.sparse_init == 'snip':
+        # mask.init_growth_prune_and_redist()
+        # layer_wise_sparsities = snip(1 - # mask.sparsity, mask.masks)
+        # for snip_mask, name in zip(layer_wise_sparsities, mask.masks):
+        #    mask.masks[name][:] = snip_mask
+        # mask.apply_mask()
+        # mask.print_status()
+        raise NotImplemented
+    else:
+        mask.init(model=model, train_loader=None, device=mask.device,
+                          mode=mask.sparse_init, density=(1 - mask.sparsity))
     runner = BackwardRunner(
         model, optimizer, gradient_accumulation_steps, device, n_gpu,
         fp16, local_rank, max_grad_norm, warmup_steps, num_train_optimization_steps)
@@ -542,6 +566,9 @@ def run_train(model_type: str,
 
     if save_freq == 'improvement' and eval_freq <= 0:
         raise ValueError("Cannot set save_freq to 'improvement' and eval_freq < 0")
+
+
+    
 
     num_trainable_parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)
     logger.info("***** Running training *****")
@@ -568,7 +595,7 @@ def run_train(model_type: str,
     with utils.wrap_cuda_oom_error(local_rank, batch_size, n_gpu, gradient_accumulation_steps):
         for epoch_id in range(start_epoch, num_train_epochs):
             run_train_epoch(epoch_id, train_loader, runner,
-                            viz, num_log_iter, gradient_accumulation_steps)
+                            viz, num_log_iter, gradient_accumulation_steps, test_loader=valid_loader, mask=mask)
             if eval_freq > 0 and (epoch_id + 1) % eval_freq == 0:
                 val_loss, _ = run_valid_epoch(epoch_id, valid_loader, runner, viz, is_master)
                 if val_loss < best_val_loss:

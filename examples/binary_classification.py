@@ -11,7 +11,7 @@ from tape.registry import registry
 from tape.tokenizers import TAPETokenizer
 from tape import ProteinBertForSequenceClassification
 
-@registry.register_task('binary_classification', num_labels=5)
+@registry.register_task('binary_classification', num_labels=2)
 class BinaryClassificationDataset(Dataset):
 
     def __init__(self,
