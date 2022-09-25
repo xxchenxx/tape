@@ -476,6 +476,7 @@ def run_train(model_type: str,
               log_level: typing.Union[str, int] = logging.INFO,
               patience: int = -1,
               pruning_ratio: float = 0,
+              fixed: bool = False,
               pruning_method: str = 'omp',
               init_method: str = 'one_shot_gm',
               sparse_mode: str = 'DST',
@@ -522,7 +523,7 @@ def run_train(model_type: str,
     mask = Masking(optimizer, prune_rate_decay=decay, prune_rate=0.5,
                            sparsity=pruning_ratio, prune_mode=pruning_method,
                            growth_mode='gradient', redistribution_mode='none', sparse_init=init_method,
-                           sparse_mode=sparse_mode, update_frequency=update_freq)
+                           sparse_mode=sparse_mode, update_frequency=update_freq, fix=fixed)
     mask.add_module(model)
     logger.info(
         f"device: {device} "

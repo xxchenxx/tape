@@ -101,6 +101,7 @@ def create_train_parser(base_parser: argparse.ArgumentParser) -> argparse.Argume
     parser.add_argument('--pruning_method', type=str, default='magnitude')
     parser.add_argument("--init_method", type=str, default='one_shot_gm', choices=['one_shot_gm', 'random', 'dense', 'snip'])
     parser.add_argument("--sparse_mode", type=str, default='DST', choices=['DST', 'GMP'])
+    parser.add_argument("--fixed", action='store_true')
     parser.add_argument("--update_freq", type=int, default=500)
 
     return parser
