@@ -209,6 +209,7 @@ class BackwardRunner(ForwardRunner):
         if self.scheduler is not None:
             self.scheduler.step()  # type: ignore
         self._global_step += 1
+        self.optimizer.zero_grad()
 
     def _step_distributed_fp16(self) -> None:
         # manually allreduce gradients after all accumulation steps
@@ -308,6 +309,7 @@ def run_train_epoch(epoch_id: int,
         if (step + 1) % gradient_accumulation_steps == 0:
             runner.step()
             mask.step()
+            
             viz.log_metrics(accumulator.step(), "train", runner.global_step)
             if runner.global_step % num_log_iter == 0:
                 end_t = timer()
