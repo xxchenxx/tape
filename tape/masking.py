@@ -206,7 +206,8 @@ class Masking(object):
             for name, weight in model.named_parameters():
                 if name not in self.masks: continue
                 self.masks[name] = ((torch.abs(weight)) > acceptable_score).float().data.to(device)
-
+            del acceptable_score
+            del all_scores
         elif mode == 'random':
             print('initialize by random pruning')
             self.baseline_nonzero = 0
