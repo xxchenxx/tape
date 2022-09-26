@@ -308,7 +308,8 @@ def run_train_epoch(epoch_id: int,
         accumulator.update(loss.item(), metrics, step=False)
         if (step + 1) % gradient_accumulation_steps == 0:
             runner.step()
-            mask.step()
+            if mask is not None:
+                mask.step()
             
             viz.log_metrics(accumulator.step(), "train", runner.global_step)
             if runner.global_step % num_log_iter == 0:
