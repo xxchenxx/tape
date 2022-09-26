@@ -317,8 +317,9 @@ def run_train_epoch(epoch_id: int,
                 start_t = end_t
 
             if runner.global_step % 3000 == 0 and test_loader is not None:
+                runner.eval()
                 run_eval_epoch(test_loader, runner, True)
-            
+                runner.train()
     final_print_str = f"Train: [Loss: {accumulator.final_loss():.5g}]"
     for name, value in accumulator.final_metrics().items():
         final_print_str += f"[{name.capitalize()}: {value:.5g}]"
