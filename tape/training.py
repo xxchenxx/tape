@@ -319,7 +319,7 @@ def run_train_epoch(epoch_id: int,
 
             if runner.global_step % 3000 == 0 and test_loader is not None:
                 runner.eval()
-                run_eval_epoch(test_loader, runner, True)
+                run_valid_epoch(epoch_id, test_loader, runner, is_master=True)
                 torch.set_grad_enabled(True)
                 runner.train()
     final_print_str = f"Train: [Loss: {accumulator.final_loss():.5g}]"
