@@ -102,6 +102,7 @@ def create_train_parser(base_parser: argparse.ArgumentParser) -> argparse.Argume
     parser.add_argument("--init_method", type=str, default='one_shot_gm', choices=['one_shot_gm', 'random', 'dense', 'snip'])
     parser.add_argument("--sparse_mode", type=str, default='DST', choices=['DST', 'GMP'])
     parser.add_argument("--fixed", action='store_true')
+    parser.add_argument("--imp", action='store_true')
     parser.add_argument("--update_freq", type=int, default=500)
 
     return parser
@@ -199,8 +200,11 @@ def run_train(args: typing.Optional[argparse.Namespace] = None, env=None) -> Non
     if missing:
         raise RuntimeError(f"Missing arguments: {missing}")
     train_args = {name: arg_dict[name] for name in arg_names}
+    if args.imp:
+        training.run_train_imp(**train_args)
+    else:
+        training.run_train(**train_args)
 
-    training.run_train(**train_args)
 
 
 def run_eval(args: typing.Optional[argparse.Namespace] = None) -> typing.Dict[str, float]:
