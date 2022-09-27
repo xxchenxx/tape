@@ -535,17 +535,6 @@ def run_train(model_type: str,
         f"n_gpu: {n_gpu}, "
         f"distributed_training: {local_rank != -1}, "
         f"16-bits training: {fp16}")
-    if mask.sparse_init == 'snip':
-        # mask.init_growth_prune_and_redist()
-        # layer_wise_sparsities = snip(1 - # mask.sparsity, mask.masks)
-        # for snip_mask, name in zip(layer_wise_sparsities, mask.masks):
-        #    mask.masks[name][:] = snip_mask
-        # mask.apply_mask()
-        # mask.print_status()
-        raise NotImplemented
-    else:
-        mask.init(model=model, train_loader=None, device=mask.device,
-                          mode=mask.sparse_init, density=(1 - mask.sparsity))
     runner = BackwardRunner(
         model, optimizer, gradient_accumulation_steps, device, n_gpu,
         fp16, local_rank, max_grad_norm, warmup_steps, num_train_optimization_steps)
@@ -557,6 +546,39 @@ def run_train(model_type: str,
     else:
         start_epoch = 0
     runner.initialize_distributed_model()
+    def snip(keep_ratio, masks):
+        for step, batch in enumerate(train_loader):
+            loss, metrics = runner.forward(batch)  # type: ignore
+            runner.backward(loss)
+            if step > 100: break
+        grads_abs = []
+        # print(masks)
+        for name, m in model.named_modules():
+            if name + ".weight" in masks:
+                grads_abs.append(torch.clone(m.weight.grad).detach().abs_())
+
+        # normalize score
+        all_scores = torch.cat([torch.flatten(x) for x in grads_abs])
+        num_params_to_keep = int(len(all_scores) * keep_ratio)
+        threshold, _ = torch.topk(all_scores, num_params_to_keep+1, sorted=True)
+        acceptable_score = threshold[-1]
+        layer_wise_sparsities = []
+        for g in grads_abs:
+            mask_ = (g > acceptable_score).float()
+            layer_wise_sparsities.append(mask_)
+
+        model.zero_grad()
+        return layer_wise_sparsities
+    if mask.sparse_init == 'snip':
+        mask.init_growth_prune_and_redist()
+        layer_wise_sparsities = snip(1 - mask.sparsity, mask.masks)
+        for snip_mask, name in zip(layer_wise_sparsities, mask.masks):
+          mask.masks[name][:] = snip_mask
+        mask.apply_mask()
+        mask.print_status()
+    else:
+        mask.init(model=model, train_loader=None, device=mask.device,
+                          mode=mask.sparse_init, density=(1 - mask.sparsity))
 
     num_train_optimization_steps = utils.get_num_train_optimization_steps(
         train_dataset, batch_size, num_train_epochs)
@@ -571,7 +593,6 @@ def run_train(model_type: str,
         raise ValueError("Cannot set save_freq to 'improvement' and eval_freq < 0")
 
 
-    
 
     num_trainable_parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)
     logger.info("***** Running training *****")
