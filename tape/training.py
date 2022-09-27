@@ -422,7 +422,7 @@ def run_eval_epoch(eval_loader: DataLoader,
     return save_outputs
 
 
-def pruning_model(model,px, method):
+def pruning_model(model,px, method='omp'):
 
     parameters_to_prune =[]
     for ii in range(12):
