@@ -877,6 +877,7 @@ def run_train_imp(model_type: str,
     utils.barrier_if_distributed()
 
     for round_ in range(10):
+        pruning_model(model, 0.2)
         optimizer = utils.setup_optimizer(model, learning_rate)
         runner = BackwardRunner(
         model, optimizer, gradient_accumulation_steps, device, n_gpu,
@@ -951,4 +952,4 @@ def run_train_imp(model_type: str,
         if best_val_loss != float('inf'):
             logger.log(35, f"Best Val Loss: {best_val_loss}")
         
-        pruning_method(model, 0.2)
+        
